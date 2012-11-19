@@ -38,3 +38,11 @@ body {
     color: green;
     line-height: 13px;
 }
+
+.text-centered {
+    text-align: center !important;
+}
+
+.btn-centered {
+    margin: 0 auto;
+}
