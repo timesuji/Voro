@@ -1,0 +1,76 @@
+Parse notes
+
+- objects
+	- new, query, set, save, destroy
+	- query: new Parse.Query(class)
+	- relations vs. objects as properties: relations aren't downloaded by default
+	- relation.query().equalTo("foo", "bar").find({success: function(list) {}})
+	- for querying purposes, a relation is an array of objects
+	- don't make a parse object more than 128kb
+- queries
+	- everything camel cased
+	- equalto, notequalto, greaterthan, greaterthanorequalto, lessthan, lessthanorequalto, limit (default 100, anything from 1 to 1000), first, find, skip (to paginate), ascending, descending, containedin (array), notcontainedin, exists (has a particular key set), doesnotexist, matcheskeyinquery, doesnotmatchkeyinquery, matches (regex), contains, startswith, endswith
+	- PCRE (perl-compatible regular expressions) - specify such as "i" for case-insensitive, "m" for multiple lines
+	- equalto also works with relational queries; can use nested queries with matchesquery (or doesn't)
+	- can query by id simply by making new item with that id
+	- can include the relational data with query.include("field"), with arrays for more and dots for nested
+	- can use count instead of find
+	- can use Parse.Query.or on several queries
+- collections
+	- ordered set of objects compatible with Backbone collections
+	- Parse.Collection.extend({model: ObjectClass})
+	- collection.fetch to get them; collection.each on the result to iterate
+	- can set comparator with collection.comparator (then sorted on each)
+	- collection.at(index), collection.get(model.id), collection.remove(model), collection.add([stuff]), collection.reset([totally_new_stuff])
+- Users
+	- special props of Parse.User: username, password, email (optional)
+	- set additional fields like phone just like Parse.Object
+	- user.signUp
+	- Parse.User.logIn("name", "pass")
+	- emailVerified key present if email verification turned on; true, false or missing
+	- cache the Parse.User.current(); will always be authenticated
+	- log out with logOut()
+	- class secured by default - user's info can only be changed by that user themselves; data default readable by anyone
+	- can do similar security with regular objects, using blah.setACL(new Parse.ACL(user)); can also setReadAccess and setWriteAccess on a per-user basis
+	- can grant or revoke all permissions with setPublicReadAccess or setPublicWriteAccess
+	- forbidden operations do this: Parse.Error.OBJECT_NOT_FOUND (can't figure out what's there but secured versus what doesn't exist)
+	- Parse.User.requestPasswordReset(email) - the typical reset-link approach
+	- querying on users works just like normal; so do associations
+	- role-based access control can be simpler than ACLs; Parse.Role is a Parse.Object with name, users relation, and roles relation (for inheritance)
+	- you make a role with a corresponding ACL (for the admins of that role) - be extremely careful!
+	- can then setRoleReadAccess and setRoleWriteAccess on new ACLs, and setACL on the objects
+	- role.getRoles().add(otherRole); role.save()
+- Facebook Users
+	- set up a FB app, add the FB ID on the Parse settings page, follow https://developers.facebook.com/docs/reference/javascript/ to put in the JS SDK, and replace FB.init() with Parse.FacebookUtils.init()
+	- can Parse.FacebookUtils.logIn("perm, perm", {success: ...}) or logIn(null, {...})
+	- link a FB user to a Parse.User with Parse.FacebookUtils.link(user, null, ...); also isLinked, unlink
+	- FB login using Parse SDK requires FB SDK be loaded first before FacebookUtils.init()
+	- DON'T call the FB object directly, as it will fall out of sync with Parse's mgmt
+- GeoPoints
+	- latitude, longitude
+	- .near, .limit, .withinGeoBox, .withinMiles, .withinKilometers, .withinRadians
+- Push Notifications
+	- a little bit more complex, check the guide
+- Views
+	- again, Parse.View is a copy of Backbone.View
+	- Backbone.Model => Parse.Object
+	- urlRoot => className
+	- replace Backbone.Collection objects with Parse.Collection and specify model: (yourModel)
+- Error Handling
+	- error: is for problems interacting with Parse Cloud (like OBJECT_NOT_FOUND) or network (like CONNECTION_FAILED)
+	- if there is a model specific to the method (like save and signUp), the first arg will be the object itself and the second will be the Parse.Error
+
+- Cloud Code: it runs on the Parse Cloud rather than mobile devices
+	- code and error if it fails
+	- validations: e.g. Parse.Cloud.beforeSave, with error if it's bad, response.object.set if you want to change it; afterSave for things like incrementing counts
+	- console.log, console.error, or console.warn to write your errors
+	- Parse.Cloud.httpRequest to send requests to any other server
+	- can require modules like
+		name = require('cloud/name.js')
+		where you have put functions into the global exports object of the module
+	- parse deploy "MyApp" for non-default; -d for description
+	- parse add for new target, parse rollback to roll back
+	- parse log (-n <lines>; -l <info>) to see the log
+	- parse releases to see prior releases (only last 20 tracked)
+	- can change the parseVersion in config/global.json
+	- modules: mailgun, sendgrid (custom email), twilio, underscore
